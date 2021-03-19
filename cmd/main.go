@@ -35,12 +35,16 @@ func main() {
 			log.Println(err)
 			continue
 		}
-		handle(conn)
+
+		err = handle(conn)
+		if err != nil {
+			log.Println(err)
+		}
 
 	}
 }
 
-func handle(conn net.Conn) {
+func handle(conn net.Conn) error {
 	defer func() {
 		if cerr := conn.Close(); cerr != nil {
 			log.Println(cerr)
@@ -54,16 +58,16 @@ func handle(conn net.Conn) {
 
 	if err != nil {
 		if err != io.EOF {
-			log.Println(err)
+			return err
 		}
 		log.Printf("received: %s\n", line)
-		log.Println(err)
+		return err
 	}
 	log.Printf("received: %s\n", line)
 
 	path, err := getPath(line)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	switch path {
@@ -76,8 +80,10 @@ func handle(conn net.Conn) {
 	}
 
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+
+	return nil
 }
 
 func writeResponse(conn net.Conn, status int, strings []string, file []byte) error {
@@ -133,20 +139,6 @@ func writeIndex(conn net.Conn) error {
 
 }
 
-func writeTransactionsCsv(conn net.Conn) error {
-	file, err := ioutil.ReadFile("web/shared/transactions.csv")
-	if err != nil {
-		return err
-	}
-
-	return writeResponse(conn, 200, []string{
-		"Content-Type: text/csv",
-		fmt.Sprintf("Content-Length: %d", len(file)),
-		"Connection: close",
-	}, file)
-
-}
-
 func includeIndexTemplate() ([]byte, error) {
 	username := "Michael"
 	balance := "1 000.50"
@@ -167,4 +159,17 @@ func getPath(line string) (string, error) {
 		return "", errors.New(fmt.Sprintf("invalid request line %s", line))
 	}
 	return parts[1], nil
+}
+
+func writeTransactionsCsv(conn net.Conn) error {
+	file, err := ioutil.ReadFile("web/shared/transactions.csv")
+	if err != nil {
+		return err
+	}
+
+	return writeResponse(conn, 200, []string{
+		"Content-Type: text/csv",
+		fmt.Sprintf("Content-Length: %d", len(file)),
+		"Connection: close",
+	}, file)
 }
