@@ -75,6 +75,10 @@ func handle(conn net.Conn) error {
 		err = writeIndex(conn)
 	case "/transactions.csv":
 		err = writeTransactionsCsv(conn)
+	case "/transactions.json":
+		err = writeTransactionsJson(conn)
+	case "/transactions.xml":
+		err = writeTransactionsXml(conn)
 	default:
 		err = write404(conn)
 	}
@@ -169,6 +173,32 @@ func writeTransactionsCsv(conn net.Conn) error {
 
 	return writeResponse(conn, 200, []string{
 		"Content-Type: text/csv",
+		fmt.Sprintf("Content-Length: %d", len(file)),
+		"Connection: close",
+	}, file)
+}
+
+func writeTransactionsJson(conn net.Conn) error {
+	file, err := ioutil.ReadFile("web/shared/transactions.json")
+	if err != nil {
+		return err
+	}
+
+	return writeResponse(conn, 200, []string{
+		"application/json; charset=utf-8",
+		fmt.Sprintf("Content-Length: %d", len(file)),
+		"Connection: close",
+	}, file)
+}
+
+func writeTransactionsXml(conn net.Conn) error {
+	file, err := ioutil.ReadFile("web/shared/transactions.xml")
+	if err != nil {
+		return err
+	}
+
+	return writeResponse(conn, 200, []string{
+		"application/xml",
 		fmt.Sprintf("Content-Length: %d", len(file)),
 		"Connection: close",
 	}, file)
