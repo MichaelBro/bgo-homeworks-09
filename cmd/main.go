@@ -36,11 +36,12 @@ func main() {
 			continue
 		}
 
-		err = handle(conn)
-		if err != nil {
-			log.Println(err)
-		}
-
+		go func() {
+			err = handle(conn)
+			if err != nil {
+				log.Println(err)
+			}
+		}()
 	}
 }
 
